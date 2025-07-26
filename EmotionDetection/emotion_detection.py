@@ -19,27 +19,38 @@ def emotion_detector(text_to_analyze):
     )
 
     header = {"grpc-metadata-mm-model-id": "emotion_aggregated-workflow_lang_en_stock"}
-    
-    input = { "raw_document": { "text": text_to_analyze } }
+
+    input_text = { "raw_document": { "text": text_to_analyze } }
 
     # send the requests to the Watson NLP Library and get the response
-    response = requests.post(url, json = input, headers = header, timeout = 10)
+    response = requests.post(url, json = input_text, headers = header, timeout = 10)
 
     # process the response by getting the 'text' attribute
     formatted_response = json.loads(response.text)
+    output_status_code = response.status_code
 
-    # extract the dict with the emotion score
-    output_dict = formatted_response['emotionPredictions'][0]['emotion']
+    if output_status_code == 400:
+        output_dict = {}
 
-    # find the dominant emotion
-    dom_emo = max(output_dict, key=output_dict.get)
+        output_dict["anger"] = None
+        output_dict["disgust"] = None
+        output_dict["fear"] = None
+        output_dict["joy"] = None
+        output_dict["sadness"] = None
+        output_dict["dominant_emotion"] = None
+    else:
+        # extract the dict with the emotion score
+        output_dict = formatted_response['emotionPredictions'][0]['emotion']
 
-    output_dict["dominant_emotion"] = dom_emo
+        # find the dominant emotion
+        dom_emo = max(output_dict, key=output_dict.get)
 
-    # return the result in dictionary form 
+        output_dict["dominant_emotion"] = dom_emo
+
+    # return the result in dictionary form
     return output_dict
 
-    '''Structure of the output
+    ''' Structure of the output
     Response: {
         emotionPrediction [ {
             emotion {
